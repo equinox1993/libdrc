@@ -73,7 +73,7 @@ DEPS="libswscale x264"
 for DEP in $DEPS
 do
     if lib_present "$DEP"; then
-        CXXFLAGS+=$(lib_cflags $DEP)
+        CXXFLAGS+=" $(lib_cflags $DEP)"
         LDFLAGS+=" $(lib_ldflags $DEP)"
     else
         echo 2>&1 "error: missing one of the required dependencies ($DEP)"
@@ -109,6 +109,7 @@ int main(void) {
   return 0;
 }
 EOF
+
 if ! $CXX $CXXFLAGS -c $TMPDIR/test.cpp -o $TMPDIR/test.o; then
     echo 2>&1 "error: could not compile a test x264 C++ source file"
     echo 2>&1 "error: this usually means pkg-config is not finding the patched x264 version - check PKG_CONFIG_PATH"
@@ -122,7 +123,7 @@ if [ x"$DEMOS" = x"y" ]; then
     for DEMOS_DEP in $DEMOS_DEPS
     do
         if lib_present $DEMOS_DEP; then
-            CXXFLAGS+=$(lib_cflags $DEMOS_DEP)
+            CXXFLAGS+=" $(lib_cflags $DEMOS_DEP)"
             LDFLAGS_DEMOS+=" $(lib_ldflags $DEMOS_DEP)"
         else
            echo 2>&1 "error: demos cannot be built because one of the dependencies ($DEMOS_DEP) could not be found"
