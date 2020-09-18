@@ -25,6 +25,7 @@
 #pragma once
 
 #include <drc/internal/events.h>
+#include <drc/video-frame-rate.h>
 #include <drc/types.h>
 #include <memory>
 #include <mutex>
@@ -52,6 +53,8 @@ class VideoStreamer : public ThreadedEventMachine {
   // Require an IDR to be sent next.
   void ResyncStream();
 
+  void SetFrameRate(VideoFrameRate frame_rate);
+
  protected:
   virtual void InitEventsAndRun();
 
@@ -65,6 +68,7 @@ class VideoStreamer : public ThreadedEventMachine {
 
   std::mutex frame_mutex_;
   std::vector<byte> frame_;
+  VideoFrameRate frame_rate_ = VideoFrameRate::k59_94Hz;
 
   TriggerableEvent* resync_evt_;
 };

@@ -46,7 +46,8 @@ s32 GetTimestamp() {
 
 void GenerateVstrmPackets(std::vector<VstrmPacket>* vstrm_packets,
                           const H264ChunkArray& chunks, u32 timestamp,
-                          bool idr, bool* vstrm_inited, u16* vstrm_seqid) {
+                          bool idr, bool* vstrm_inited, u16* vstrm_seqid,
+                          VideoFrameRate frame_rate) {
   // Set the init flag on the first frame ever sent.
   bool init_flag = !*vstrm_inited;
   if (init_flag) {
@@ -89,7 +90,7 @@ void GenerateVstrmPackets(std::vector<VstrmPacket>* vstrm_packets,
       pkt->SetFrameEndFlag(last_chunk && last_packet);
 
       pkt->SetIdrFlag(idr);
-      pkt->SetFrameRate(VstrmFrameRate::k59_94Hz);  // TODO(delroth): setting?
+      pkt->SetFrameRate(frame_rate);
 
       first_packet = false;
     } while (chunk_size != 0);
@@ -159,6 +160,10 @@ void VideoStreamer::ResyncStream() {
   }
 }
 
+void VideoStreamer::SetFrameRate(VideoFrameRate frame_rate) {
+  frame_rate_ = frame_rate;
+}
+
 void VideoStreamer::InitEventsAndRun() {
   bool resync_requested = false;
   resync_evt_ = NewTriggerableEvent([&](Event*) {
@@ -193,7 +198,7 @@ void VideoStreamer::InitEventsAndRun() {
       send_idr = resync_requested || !vstrm_inited;
       const H264ChunkArray& chunks = encoder_->Encode(encoding_frame, send_idr);
       GenerateVstrmPackets(&vstrm_packets, chunks, timestamp, send_idr,
-                           &vstrm_inited, &vstrm_seqid);
+                           &vstrm_inited, &vstrm_seqid, frame_rate_);
       GenerateAstrmPacket(&astrm_packet, timestamp);
 
       vstrm_inited = true;

@@ -25,6 +25,7 @@
 #pragma once
 
 #include <array>
+#include <drc/video-frame-rate.h>
 #include <drc/types.h>
 #include <vector>
 
@@ -35,15 +36,6 @@ const size_t kVstrmHeaderSize = 16;
 // Limit our payload size to around 1400 bytes (DRC MTU is about 1800 bytes, so
 // increasing this could help performance in the future).
 const size_t kMaxVstrmPayloadSize = 1400;
-
-enum class VstrmFrameRate {
-  k59_94Hz = 0,
-  k50Hz = 1,
-  k29_97Hz = 2,
-  k25Hz = 3,
-
-  kUnknown = -1,
-};
 
 class VstrmPacket {
  public:
@@ -58,7 +50,7 @@ class VstrmPacket {
   bool ChunkEndFlag() const;
   bool FrameEndFlag() const;
   bool IdrFlag() const;
-  VstrmFrameRate FrameRate() const;
+  VideoFrameRate FrameRate() const;
   const byte* Payload() const;
   size_t PayloadSize() const;
 
@@ -69,7 +61,7 @@ class VstrmPacket {
   void SetChunkEndFlag(bool flag);
   void SetFrameEndFlag(bool flag);
   void SetIdrFlag(bool flag);
-  void SetFrameRate(VstrmFrameRate framerate);
+  void SetFrameRate(VideoFrameRate framerate);
   void SetPayload(const byte* payload, size_t size);
 
   const byte* GetBytes() const { return pkt_.data(); }

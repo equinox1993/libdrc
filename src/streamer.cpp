@@ -152,6 +152,10 @@ void Streamer::EnableSystemInputFeeder() {
 #endif
 }
 
+void Streamer::SetFrameRate(VideoFrameRate frame_rate) {
+  vid_streamer_->SetFrameRate(frame_rate);
+}
+
 void Streamer::SetTSArea(u16 width, u16 height, StretchMode stretch) {
   float margin_x = 0.0f, margin_y = 0.0f, size_x = 1.0f, size_y = 1.0f;
   switch (stretch) {

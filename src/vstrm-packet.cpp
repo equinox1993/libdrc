@@ -64,12 +64,12 @@ bool VstrmPacket::IdrFlag() const {
   return GetExtOption(0x80);
 }
 
-VstrmFrameRate VstrmPacket::FrameRate() const {
+VideoFrameRate VstrmPacket::FrameRate() const {
   byte framerate;
   if (!GetExtOption(0x82, &framerate)) {
-    return VstrmFrameRate::kUnknown;
+    return VideoFrameRate::kUnknown;
   }
-  return static_cast<VstrmFrameRate>(framerate);
+  return static_cast<VideoFrameRate>(framerate);
 }
 
 const byte* VstrmPacket::Payload() const {
@@ -100,8 +100,8 @@ void VstrmPacket::SetIdrFlag(bool flag) {
   }
 }
 
-void VstrmPacket::SetFrameRate(VstrmFrameRate framerate) {
-  if (framerate == VstrmFrameRate::kUnknown) {
+void VstrmPacket::SetFrameRate(VideoFrameRate framerate) {
+  if (framerate == VideoFrameRate::kUnknown) {
     ClearExtOption(0x82, true);
   } else {
     byte val = static_cast<byte>(framerate);

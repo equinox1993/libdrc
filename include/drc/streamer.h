@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <drc/video-frame-rate.h>
 #include <drc/input.h>
 #include <drc/pixel-format.h>
 #include <drc/types.h>
@@ -102,6 +103,7 @@ class Streamer {
   // use the basic GamePad input data transparently, without any code change.
   void EnableSystemInputFeeder();
 
+  void SetFrameRate(VideoFrameRate frame_rate);
 
   // Sets the mode the rendering is in so returned coordinates are expressed
   // in terms of source pixels. This is used to simplify input for the
