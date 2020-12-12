@@ -30,8 +30,10 @@
 #include <drc/internal/udp.h>
 #include <drc/internal/video-streamer.h>
 #include <drc/internal/vstrm-packet.h>
+#include <memory>
 #include <mutex>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace drc {
@@ -117,6 +119,22 @@ void GenerateAstrmPacket(AstrmPacket* pkt, u32 ts) {
   pkt->SetPayload(payload, sizeof (payload));
 }
 
+std::unique_ptr<H264ChunkArray> AsChunkArray(
+    const std::vector<std::string>& chunks) {
+  auto chunk_array = std::make_unique<H264ChunkArray>();
+  size_t index = 0u;
+  for (const auto& chunk : chunks) {
+    if (index >= kH264ChunksPerFrame) {
+      // More chunks than expected.
+      break;
+    }
+    (*chunk_array)[index] = std::make_tuple(
+        reinterpret_cast<const unsigned char*>(chunk.data()), chunk.size());
+    index++;
+  }
+  return chunk_array;
+}
+
 }  // namespace
 
 VideoStreamer::VideoStreamer(const std::string& vid_dst,
@@ -154,12 +172,9 @@ void VideoStreamer::PushFrame(std::vector<byte>* frame) {
   frame_ = std::move(*frame);
 }
 
-void VideoStreamer::PushH264ChunkArray(
-    std::unique_ptr<H264ChunkArray> h264_chunks) {
+void VideoStreamer::PushH264Chunks(std::vector<std::string>&& chunks) {
   std::lock_guard<std::mutex> lk(frame_mutex_);
-  if (h264_chunks) {
-    h264_chunks_ = std::move(h264_chunks);
-  }
+  h264_chunks_ = chunks;
 }
 
 void VideoStreamer::ResyncStream() {
@@ -179,8 +194,8 @@ void VideoStreamer::InitEventsAndRun() {
     return true;
   });
 
+  std::vector<std::string> h264_chunks;
   std::vector<byte> encoding_frame;
-  std::unique_ptr<H264ChunkArray> h264_chunks;
 
   bool vstrm_inited = false;
   u16 vstrm_seqid = 0;
@@ -202,14 +217,17 @@ void VideoStreamer::InitEventsAndRun() {
     }
 
     s32 timestamp = GetTimestamp();
-    LatchOnCurrentFrame(&encoding_frame);
     LatchOnCurrentChunks(&h264_chunks);
-    if (h264_chunks || encoding_frame.size() > 0) {
+    LatchOnCurrentFrame(&encoding_frame);
+    std::unique_ptr<H264ChunkArray> chunk_array;
+    if (h264_chunks.size() > 0) {
+      chunk_array = AsChunkArray(h264_chunks);
+    }
+    if (chunk_array || encoding_frame.size() > 0) {
       send_idr = resync_requested || !vstrm_inited;
       const H264ChunkArray& chunks =
-          h264_chunks ?
-              *h264_chunks :
-              encoder_->Encode(encoding_frame, send_idr);
+          chunk_array ?
+              *chunk_array : encoder_->Encode(encoding_frame, send_idr);
       GenerateVstrmPackets(&vstrm_packets, chunks, timestamp, send_idr,
                            &vstrm_inited, &vstrm_seqid, frame_rate_);
       GenerateAstrmPacket(&astrm_packet, timestamp);
@@ -240,10 +258,10 @@ void VideoStreamer::LatchOnCurrentFrame(std::vector<byte>* latched_frame) {
 }
 
 void VideoStreamer::LatchOnCurrentChunks(
-    std::unique_ptr<H264ChunkArray>* latched_chunks) {
+    std::vector<std::string>* latched_chunk) {
   std::lock_guard<std::mutex> lk(frame_mutex_);
-  if (h264_chunks_) {
-    *latched_chunks = std::move(h264_chunks_);
+  if (h264_chunks_.size() != 0) {
+    *latched_chunk = std::move(h264_chunks_);
   }
 }
 

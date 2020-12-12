@@ -36,6 +36,12 @@ extern "C" {
 
 namespace drc {
 
+// A chunk is defined as a pointer to encoded data and the size of that data.
+// There are 5 chunks in a frame.
+const int kH264ChunksPerFrame = 5;
+typedef std::tuple<const byte*, size_t> H264Chunk;
+typedef std::array<H264Chunk, kH264ChunksPerFrame> H264ChunkArray;
+
 class H264Encoder {
  public:
   H264Encoder();

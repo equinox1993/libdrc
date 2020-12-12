@@ -50,7 +50,7 @@ class VideoStreamer : public ThreadedEventMachine {
   // Needs YUV420P at the right size (kScreenWidth x kScreenHeight).
   void PushFrame(std::vector<byte>* frame);
 
-  void PushH264ChunkArray(std::unique_ptr<H264ChunkArray> h264_chunks);
+  void PushH264Chunks(std::vector<std::string>&& chunks);
 
   // Require an IDR to be sent next.
   void ResyncStream();
@@ -62,7 +62,7 @@ class VideoStreamer : public ThreadedEventMachine {
 
  private:
   void LatchOnCurrentFrame(std::vector<byte>* latched_frame);
-  void LatchOnCurrentChunks(std::unique_ptr<H264ChunkArray>* latched_chunks);
+  void LatchOnCurrentChunks(std::vector<std::string>* latched_chunk);
 
   std::unique_ptr<UdpClient> astrm_client_;
   std::unique_ptr<UdpClient> vstrm_client_;
@@ -71,7 +71,7 @@ class VideoStreamer : public ThreadedEventMachine {
 
   std::mutex frame_mutex_;
   std::vector<byte> frame_;
-  std::unique_ptr<H264ChunkArray> h264_chunks_;
+  std::vector<std::string> h264_chunks_;
   VideoFrameRate frame_rate_ = VideoFrameRate::k59_94Hz;
 
   TriggerableEvent* resync_evt_;

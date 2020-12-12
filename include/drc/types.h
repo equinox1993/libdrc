@@ -30,7 +30,6 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <vector>
 
@@ -49,11 +48,5 @@ typedef int64_t s64;
 typedef uint8_t byte;
 
 typedef std::vector<byte> buffer;
-
-// A chunk is defined as a pointer to encoded data and the size of that data.
-// There are 5 chunks in a frame.
-const int kH264ChunksPerFrame = 5;
-typedef std::tuple<const byte*, size_t> H264Chunk;
-typedef std::array<H264Chunk, kH264ChunksPerFrame> H264ChunkArray;
 
 }  // namespace drc
