@@ -154,6 +154,14 @@ void VideoStreamer::PushFrame(std::vector<byte>* frame) {
   frame_ = std::move(*frame);
 }
 
+void VideoStreamer::PushH264ChunkArray(
+    std::unique_ptr<H264ChunkArray> h264_chunks) {
+  std::lock_guard<std::mutex> lk(frame_mutex_);
+  if (h264_chunks) {
+    h264_chunks_ = std::move(h264_chunks);
+  }
+}
+
 void VideoStreamer::ResyncStream() {
   if (resync_evt_) {
     resync_evt_->Trigger();
@@ -172,6 +180,7 @@ void VideoStreamer::InitEventsAndRun() {
   });
 
   std::vector<byte> encoding_frame;
+  std::unique_ptr<H264ChunkArray> h264_chunks;
 
   bool vstrm_inited = false;
   u16 vstrm_seqid = 0;
@@ -194,9 +203,13 @@ void VideoStreamer::InitEventsAndRun() {
 
     s32 timestamp = GetTimestamp();
     LatchOnCurrentFrame(&encoding_frame);
-    if (encoding_frame.size() > 0) {
+    LatchOnCurrentChunks(&h264_chunks);
+    if (h264_chunks || encoding_frame.size() > 0) {
       send_idr = resync_requested || !vstrm_inited;
-      const H264ChunkArray& chunks = encoder_->Encode(encoding_frame, send_idr);
+      const H264ChunkArray& chunks =
+          h264_chunks ?
+              *h264_chunks :
+              encoder_->Encode(encoding_frame, send_idr);
       GenerateVstrmPackets(&vstrm_packets, chunks, timestamp, send_idr,
                            &vstrm_inited, &vstrm_seqid, frame_rate_);
       GenerateAstrmPacket(&astrm_packet, timestamp);
@@ -223,6 +236,14 @@ void VideoStreamer::LatchOnCurrentFrame(std::vector<byte>* latched_frame) {
   std::lock_guard<std::mutex> lk(frame_mutex_);
   if (frame_.size() != 0) {
     *latched_frame = std::move(frame_);
+  }
+}
+
+void VideoStreamer::LatchOnCurrentChunks(
+    std::unique_ptr<H264ChunkArray>* latched_chunks) {
+  std::lock_guard<std::mutex> lk(frame_mutex_);
+  if (h264_chunks_) {
+    *latched_chunks = std::move(h264_chunks_);
   }
 }
 

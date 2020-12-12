@@ -1,6 +1,9 @@
 libdrc - a C++ library for interaction with a Nintendo Wii U Gamepad
 ====================================================================
 
+WARNING: This repo contains experimental changes. Please use rolandoislas/libdrc
+instead.
+
 Current version: 1.0-dev
 
 Supported features

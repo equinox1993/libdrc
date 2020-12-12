@@ -138,6 +138,10 @@ void Streamer::PushNativeVidFrame(std::vector<byte>* frame) {
   vid_streamer_->PushFrame(frame);
 }
 
+void Streamer::PushH264ChunkArray(std::unique_ptr<H264ChunkArray> h264_chunks) {
+  vid_streamer_->PushH264ChunkArray(std::move(h264_chunks));
+}
+
 void Streamer::PushAudSamples(const std::vector<s16>& samples) {
   aud_streamer_->PushSamples(samples);
 }

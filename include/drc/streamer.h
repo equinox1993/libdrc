@@ -91,6 +91,8 @@ class Streamer {
   // Faster: PushVidFrame requires pixel format conversion before encoding.
   void PushNativeVidFrame(std::vector<u8>* frame);
 
+  void PushH264ChunkArray(std::unique_ptr<H264ChunkArray> h264_chunks);
+
   // Expects 48KHz samples.
   void PushAudSamples(const std::vector<s16>& samples);
 
